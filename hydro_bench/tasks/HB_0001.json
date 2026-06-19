@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "task_id": "HB_0001",
+  "category": "soil_moisture_retrieval",
+  "station_id": "US_COSMOS_ARM1",
+  "time_range": ["2017-08-10", "2018-08-09"],
+  "question": "Estimate daily surface soil moisture for COSMOS ARM-1, compare ERA5, water-balance and Kalman baselines against held-out ISMN, quantify uncertainty, and reject conclusions if evidence is insufficient.",
+  "required_tools": [
+    "get_station_metadata",
+    "load_ismn_soil_moisture",
+    "load_era5_forcing",
+    "match_footprint",
+    "reject_if_unreliable",
+    "compute_water_balance",
+    "run_kalman_assimilation",
+    "compute_uncertainty",
+    "compute_metrics"
+  ],
+  "expected_outputs": [
+    "daily_estimates.csv",
+    "metrics.json",
+    "trajectory.json",
+    "report.html",
+    "figures/time_series.svg",
+    "figures/scatter.svg",
+    "figures/uncertainty.svg",
+    "figures/map.svg"
+  ],
+  "gold_answer": {
+    "best_method": "last_observation_persistence",
+    "rmse_max": 0.11,
+    "coverage_95_min": 0.90,
+    "conclusion_scope": "single-station pipeline evidence only"
+  },
+  "scoring": {
+    "required_parameters": {
+      "get_station_metadata": {"station_id": "US_COSMOS_ARM1"},
+      "load_ismn_soil_moisture": {"start": "2017-08-10", "end": "2018-08-09"},
+      "load_era5_forcing": {"start": "2017-08-10", "end": "2018-08-09"},
+      "match_footprint": {"temporal_rule": "same-day", "depth_rule": "surface-compatible"}
+    },
+    "weights": {
+      "TAO": 0.125,
+      "TIO": 0.125,
+      "TEM": 0.125,
+      "Param": 0.125,
+      "Efficiency": 0.10,
+      "Accuracy": 0.15,
+      "Hydro-QC": 0.125,
+      "Phys-Consistency": 0.125
+    }
+  }
+}

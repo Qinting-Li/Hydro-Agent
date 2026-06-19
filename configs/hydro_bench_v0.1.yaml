@@ -1,0 +1,15 @@
+{
+  "benchmark": "Hydro-Bench",
+  "version": "0.1.0",
+  "task_glob": "hydro_bench/tasks/HB_*.json",
+  "output_root": "outputs/runs",
+  "device": {
+    "requested_gpu_index": 1,
+    "requested_gpu_name": "Quadro RTX 6000",
+    "cuda_required": false
+  },
+  "reproducibility": {
+    "random_seed": 20260619,
+    "strict_manifest": true
+  }
+}

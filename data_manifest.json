@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "datasets": [
+    {
+      "dataset": "ISMN",
+      "role": "ground_truth_only",
+      "path": "data/raw/ismn_arm1.stm",
+      "bytes": 948144,
+      "sha256": "151bef8b3dfd3c2a38add780ac8d3a6de953cc53a8387dcdde05787a90fc16e8",
+      "units": "m3/m3",
+      "depth_m": [0.0, 0.19]
+    },
+    {
+      "dataset": "ERA5 via Open-Meteo",
+      "role": "forcing_and_baseline",
+      "path": "data/raw/era5_arm1.json",
+      "bytes": 349047,
+      "sha256": "dcd885bf56d6a023740a8cfb6a54a1e7c41ddce229a9a0ee8b84ae1a63a7a037",
+      "units": {"soil_moisture": "m3/m3", "precipitation": "mm", "et0": "mm"}
+    }
+  ],
+  "unavailable_in_v0.1": ["SMAP L3", "GLDAS/Noah", "SMOS", "Sentinel-1", "Sentinel-2"],
+  "policy": "Unavailable products are never synthesized or represented as observations."
+}
