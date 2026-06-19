@@ -1,4 +1,4 @@
-"""One-command Hydro-Bench v0.1 runner with immutable run artefacts."""
+"""One-command Hydro-Bench v0.2 runner with immutable run artefacts."""
 
 from __future__ import annotations
 
@@ -16,7 +16,12 @@ from pathlib import Path
 from ..agent.executor import HydroAgentExecutor
 from ..io import read_json, write_json, write_rows
 from ..report.render_html import render_benchmark_summary, render_task_report
-from ..tools.benchmark_tools import build_registry, load_experiment_config
+from ..tools.benchmark_tools import (
+    build_registry,
+    load_evaluator_labels,
+    load_experiment_config,
+    load_station_catalog,
+)
 from .scorer import score_trajectory
 from .task_loader import load_task
 
@@ -73,12 +78,13 @@ def _unique_run_dir(output_root: Path, run_id: str | None) -> Path:
     return candidate
 
 
-def run_benchmark(project_root: Path, task_path: Path, run_id: str | None = None) -> Path:
+def run_benchmark(project_root: Path, task_path: Path, run_id: str | None = None, output_root: Path | None = None) -> Path:
     project_root = project_root.resolve()
     task = load_task(task_path)
-    bench_config = read_json(project_root / "configs" / "hydro_bench_v0.1.yaml")
+    bench_config_path = project_root / "configs" / "hydro_bench_v0.2.yaml"
+    bench_config = read_json(bench_config_path)
     manifest_evidence = verify_manifest(project_root)
-    run_dir = _unique_run_dir(project_root / bench_config["output_root"], run_id)
+    run_dir = _unique_run_dir(output_root or project_root / bench_config["output_root"], run_id)
     environment = {
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "python": sys.version,
@@ -88,12 +94,18 @@ def run_benchmark(project_root: Path, task_path: Path, run_id: str | None = None
         "gpu_inventory": _gpu_inventory(),
         "requested_device": bench_config["device"],
         "compute_backend": "python-standard-library-cpu",
-        "gpu_note": "Process affinity is recorded; v0.1 contains no CUDA kernels and does not claim GPU acceleration.",
+        "gpu_note": "Process affinity is recorded; v0.2 contains no CUDA kernels and does not claim GPU acceleration.",
     }
+    station_catalog = load_station_catalog(project_root)
+    station = next((item for item in station_catalog if item["station_id"] == task["station_id"]), None)
+    if station is None:
+        raise KeyError(f"Station not found: {task['station_id']}")
     context = {
         "project_root": project_root,
         "run_dir": run_dir,
         "experiment_config": load_experiment_config(project_root),
+        "station_catalog": station_catalog,
+        "evaluator_labels": load_evaluator_labels(project_root, station, task),
     }
     context, logger = HydroAgentExecutor(build_registry()).run(task, context)
     trajectory = logger.as_dict()
@@ -108,7 +120,7 @@ def run_benchmark(project_root: Path, task_path: Path, run_id: str | None = None
     write_json(run_dir / "environment.json", environment)
     write_json(run_dir / "data_manifest_evidence.json", {"files": manifest_evidence})
     shutil.copy2(task_path, run_dir / "task.json")
-    shutil.copy2(project_root / "configs" / "hydro_bench_v0.1.yaml", run_dir / "benchmark_config.yaml")
+    shutil.copy2(bench_config_path, run_dir / "benchmark_config.yaml")
     shutil.copy2(project_root / "configs" / "arm1_demo.json", run_dir / "experiment_config.json")
     render_task_report(task, result, trajectory, context["rows"], context["station"], run_dir)
     render_benchmark_summary([result], run_dir / "benchmark_summary.html")

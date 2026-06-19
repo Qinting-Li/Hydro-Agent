@@ -11,6 +11,8 @@ class ToolResult:
     output_summary: dict
     warnings: list[str] = field(default_factory=list)
     qc: str = "pass"
+    accessed_inputs: list[str] = field(default_factory=list)
+    execution_scope: str = "agent"
 
 
 ToolFunction = Callable[[dict, dict, dict], ToolResult]

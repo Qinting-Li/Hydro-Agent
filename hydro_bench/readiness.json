@@ -1,0 +1,17 @@
+{
+  "eligible_station_count": 0,
+  "minimum_station_target": 30,
+  "climate_zones": [],
+  "publication_ready": false,
+  "eligible_station_ids": [],
+  "rejected": [
+    {
+      "station_id": "US_COSMOS_ARM1",
+      "reasons": [
+        "less_than_two_years"
+      ]
+    }
+  ],
+  "generated_tasks": 0,
+  "note": "No task is generated from missing or sub-threshold data; acquire real observations first."
+}

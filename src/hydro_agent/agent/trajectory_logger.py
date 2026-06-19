@@ -31,6 +31,8 @@ class TrajectoryLogger:
                     "status": "failed",
                     "warnings": [f"{type(exc).__name__}: {exc}"],
                     "qc": "fail",
+                    "accessed_inputs": [],
+                    "execution_scope": "agent",
                 }
             )
             raise
@@ -46,6 +48,8 @@ class TrajectoryLogger:
                 "status": status,
                 "warnings": result.warnings,
                 "qc": result.qc,
+                "accessed_inputs": result.accessed_inputs,
+                "execution_scope": result.execution_scope,
             }
         )
         return result

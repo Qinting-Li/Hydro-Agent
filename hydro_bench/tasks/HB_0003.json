@@ -1,26 +1,26 @@
 {
   "schema_version": "2.0",
-  "task_id": "HB_0001",
-  "category": "soil_moisture_retrieval",
-  "mode": "station-aware_forecasting",
+  "task_id": "HB_0003",
+  "category": "gap_filling",
+  "mode": "gap-filling",
   "station_id": "US_COSMOS_ARM1",
   "time_range": [
     "2017-08-10",
     "2018-08-09"
   ],
-  "question": "Forecast 2018 daily soil moisture with rolling access to prior station observations; compare legal station-aware baselines and audit label leakage.",
+  "question": "Fill a blocked 61-day station-observation gap using only observations before the gap plus ERA5 and physical models.",
   "allowed_inputs": [
     "station_metadata",
     "ERA5",
     "model_config",
     "ISMN_availability_metadata",
-    "historical_ISMN"
+    "pre_gap_ISMN"
   ],
   "forbidden_inputs": [
+    "historical_ISMN",
     "future_ISMN",
     "current_day_ISMN",
-    "test_label",
-    "pre_gap_ISMN"
+    "test_label"
   ],
   "required_tools": [
     "get_station_metadata",
@@ -45,11 +45,10 @@
     "figures/map.svg"
   ],
   "split": {
-    "type": "leave-year-out",
-    "test_year": 2018
+    "type": "blocked-gap"
   },
   "gold_answer": {
-    "best_method": "persistence",
+    "best_method": "linear_regression",
     "rmse_max": 0.12,
     "coverage_95_min": 0.9,
     "conclusion_scope": "single-station mode-specific evidence only"
@@ -79,5 +78,9 @@
       "Phys-Consistency": 0.1,
       "Leakage-Safety": 0.18
     }
-  }
+  },
+  "gap": [
+    "2018-03-01",
+    "2018-04-30"
+  ]
 }

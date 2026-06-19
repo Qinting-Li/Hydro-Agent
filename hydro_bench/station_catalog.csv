@@ -1,2 +1,2 @@
-station_id,network,station_name,lat,lon,depth_min_m,depth_max_m,climate_zone,land_cover,start_date,end_date,valid_days,missing_rate,matched_smap_pixel,matched_gldas_grid
-US_COSMOS_ARM1,COSMOS,ARM-1,36.6054,-97.4878,0.0,0.19,temperate,grassland,2017-08-10,2018-08-09,333,0.0877,UNAVAILABLE_V0.1,UNAVAILABLE_V0.1
+station_id,network,station_name,lat,lon,depth_min_m,depth_max_m,climate_zone,land_cover,start_date,end_date,valid_days,missing_rate,ismn_path,era5_path,matched_smap_pixel,matched_gldas_grid
+US_COSMOS_ARM1,COSMOS,ARM-1,36.6054,-97.4878,0.0,0.19,temperate,grassland,2017-08-10,2018-08-09,333,0.0877,data/raw/ismn_arm1.stm,data/raw/era5_arm1.json,UNAVAILABLE_V0.2,UNAVAILABLE_V0.2

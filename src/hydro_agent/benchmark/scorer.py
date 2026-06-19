@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 
-METRIC_NAMES = ("TAO", "TIO", "TEM", "Param", "Efficiency", "Accuracy", "Hydro-QC", "Phys-Consistency")
+from .leakage import audit_leakage
+
+
+METRIC_NAMES = ("TAO", "TIO", "TEM", "Param", "Efficiency", "Accuracy", "Hydro-QC", "Phys-Consistency", "Leakage-Safety")
 
 
 def _lcs_length(left: list[str], right: list[str]) -> int:
@@ -44,9 +47,12 @@ def score_trajectory(task: dict, trajectory: dict, result: dict) -> dict:
     required_set, executed_set = set(gold_path), set(agent_path)
     successful = [step for step in steps if step["status"] in {"success", "warning"}]
     tio_checks = [bool(step["output_summary"]) and step["status"] != "failed" for step in steps]
-    qc_tools = {"load_ismn_soil_moisture", "match_footprint", "reject_if_unreliable"}
+    qc_tools = {"load_era5_forcing", "match_footprint", "reject_if_unreliable"}
+    if "load_station_history" in gold_path:
+        qc_tools.add("load_station_history")
     qc_checks = [name in executed_set and steps_by_name[name]["qc"] != "fail" for name in qc_tools]
     physical_checks = list(result.get("physical_checks", {}).values())
+    leakage = audit_leakage(task, trajectory)
     metrics = {
         "TAO": _lcs_length(agent_path, gold_path) / len(gold_path),
         "TIO": sum(tio_checks) / len(tio_checks) if tio_checks else 0.0,
@@ -56,6 +62,7 @@ def score_trajectory(task: dict, trajectory: dict, result: dict) -> dict:
         "Accuracy": _accuracy_score(task, result),
         "Hydro-QC": sum(qc_checks) / len(qc_checks),
         "Phys-Consistency": sum(bool(value) for value in physical_checks) / len(physical_checks) if physical_checks else 0.0,
+        "Leakage-Safety": leakage["score"],
     }
     weights = task["scoring"]["weights"]
     weight_total = sum(weights.get(name, 0.0) for name in METRIC_NAMES)
@@ -68,4 +75,5 @@ def score_trajectory(task: dict, trajectory: dict, result: dict) -> dict:
         "step_by_step": {name: round(metrics[name], 6) for name in METRIC_NAMES},
         "end_to_end": round(end_to_end, 6),
         "all_required_tools_executed": required_set <= executed_set,
+        "leakage_audit": leakage,
     }
