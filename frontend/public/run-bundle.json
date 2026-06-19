@@ -1,0 +1,817 @@
+{
+  "trajectory": {
+    "schema_version": "1.0",
+    "task_id": "HB_0001",
+    "steps": [
+      {
+        "step": 1,
+        "tool_name": "get_station_metadata",
+        "input": {
+          "station_id": "US_COSMOS_ARM1"
+        },
+        "output_summary": {
+          "station_id": "US_COSMOS_ARM1",
+          "network": "COSMOS",
+          "lat": 36.6054,
+          "lon": -97.4878,
+          "depth_m": [
+            0.0,
+            0.19
+          ],
+          "climate_zone": "temperate",
+          "land_cover": "grassland"
+        },
+        "started_utc": "2026-06-19T06:50:21.952289+00:00",
+        "runtime_ms": 0.011,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "station_metadata"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 2,
+        "tool_name": "load_station_history",
+        "input": {},
+        "output_summary": {
+          "history_days": 142,
+          "last_history_date": "2017-12-31",
+          "label_visibility": "historical_ISMN"
+        },
+        "started_utc": "2026-06-19T06:50:21.952289+00:00",
+        "runtime_ms": 0.021,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "historical_ISMN"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 3,
+        "tool_name": "load_era5_forcing",
+        "input": {
+          "start": "2017-08-10",
+          "end": "2018-08-09"
+        },
+        "output_summary": {
+          "path": "data\\raw\\era5_arm1.json",
+          "valid_daily_observations": 365,
+          "variables": [
+            "precipitation_mm",
+            "temperature_c",
+            "et0_mm",
+            "era5_soil_moisture"
+          ]
+        },
+        "started_utc": "2026-06-19T06:50:21.952289+00:00",
+        "runtime_ms": 6.891,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ERA5"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 4,
+        "tool_name": "match_footprint",
+        "input": {
+          "temporal_rule": "same-day",
+          "depth_rule": "surface-compatible"
+        },
+        "output_summary": {
+          "matched_days": 333,
+          "temporal_rule": "same-day",
+          "depth_rule": "surface-compatible",
+          "spatial_rule": "station-to-ERA5 point; SMAP/GLDAS footprint unavailable in v0.2"
+        },
+        "started_utc": "2026-06-19T06:50:21.960308+00:00",
+        "runtime_ms": 0.084,
+        "status": "warning",
+        "warnings": [
+          "SMAP footprint and GLDAS grid matching remain unavailable; regional claims are prohibited.",
+          "Station support depth exceeds the preferred 0-0.10 m surface target."
+        ],
+        "qc": "warning",
+        "accessed_inputs": [
+          "ERA5",
+          "station_metadata",
+          "ISMN_availability_metadata"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 5,
+        "tool_name": "reject_if_unreliable",
+        "input": {},
+        "output_summary": {
+          "accepted": true,
+          "matched_days": 333,
+          "missing_fraction": 0.0876712328767123
+        },
+        "started_utc": "2026-06-19T06:50:21.960308+00:00",
+        "runtime_ms": 0.008,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ISMN_availability_metadata"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 6,
+        "tool_name": "compute_water_balance",
+        "input": {},
+        "output_summary": {
+          "days": 333,
+          "minimum": 0.08,
+          "maximum": 0.46,
+          "bounded": true
+        },
+        "started_utc": "2026-06-19T06:50:21.960308+00:00",
+        "runtime_ms": 0.19,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ERA5",
+          "model_config"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 7,
+        "tool_name": "run_kalman_assimilation",
+        "input": {},
+        "output_summary": {
+          "days": 333,
+          "observations_assimilated": 111,
+          "state_bounded": true,
+          "uncertainty_positive": true
+        },
+        "started_utc": "2026-06-19T06:50:21.960615+00:00",
+        "runtime_ms": 0.894,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ERA5",
+          "model_config"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 8,
+        "tool_name": "compute_baselines",
+        "input": {},
+        "output_summary": {
+          "eligible": [
+            "era5_baseline",
+            "water_balance",
+            "kalman_analysis",
+            "persistence",
+            "climatology",
+            "linear_regression"
+          ],
+          "excluded": {},
+          "linear_model": {
+            "linear_intercept": -0.03935909136682725,
+            "linear_slope": 0.7060885113786735,
+            "history_days": 142
+          },
+          "persistence_rule": "rolling t-1 observation only"
+        },
+        "started_utc": "2026-06-19T06:50:21.960615+00:00",
+        "runtime_ms": 0.318,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ERA5",
+          "historical_ISMN"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 9,
+        "tool_name": "compute_uncertainty",
+        "input": {},
+        "output_summary": {
+          "method": "legal-history RMSE-to-spread scaling",
+          "training_days": 142,
+          "scale_factor": 3.6432915589074297
+        },
+        "started_utc": "2026-06-19T06:50:21.960615+00:00",
+        "runtime_ms": 0.117,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "historical_ISMN"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 10,
+        "tool_name": "compute_metrics",
+        "input": {},
+        "output_summary": {
+          "test_days": 191,
+          "best_method": "persistence",
+          "best_rmse": 0.023144132023483165,
+          "kalman_coverage_95": 0.9581151832460733
+        },
+        "started_utc": "2026-06-19T06:50:21.960615+00:00",
+        "runtime_ms": 0.678,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "test_label"
+        ],
+        "execution_scope": "evaluator"
+      }
+    ],
+    "evaluation": {
+      "schema_version": "1.0",
+      "task_id": "HB_0001",
+      "ground_truth_path": [
+        "get_station_metadata",
+        "load_station_history",
+        "load_era5_forcing",
+        "match_footprint",
+        "reject_if_unreliable",
+        "compute_water_balance",
+        "run_kalman_assimilation",
+        "compute_baselines",
+        "compute_uncertainty",
+        "compute_metrics"
+      ],
+      "agent_path": [
+        "get_station_metadata",
+        "load_station_history",
+        "load_era5_forcing",
+        "match_footprint",
+        "reject_if_unreliable",
+        "compute_water_balance",
+        "run_kalman_assimilation",
+        "compute_baselines",
+        "compute_uncertainty",
+        "compute_metrics"
+      ],
+      "step_by_step": {
+        "TAO": 1.0,
+        "TIO": 1.0,
+        "TEM": 1.0,
+        "Param": 1.0,
+        "Efficiency": 1.0,
+        "Accuracy": 1.0,
+        "Hydro-QC": 1.0,
+        "Phys-Consistency": 1.0,
+        "Leakage-Safety": 1.0
+      },
+      "end_to_end": 1.0,
+      "all_required_tools_executed": true,
+      "leakage_audit": {
+        "allowed_inputs": [
+          "ERA5",
+          "ISMN_availability_metadata",
+          "historical_ISMN",
+          "model_config",
+          "station_metadata"
+        ],
+        "forbidden_inputs": [
+          "current_day_ISMN",
+          "future_ISMN",
+          "pre_gap_ISMN",
+          "test_label"
+        ],
+        "step_audits": [
+          {
+            "step": 1,
+            "tool_name": "get_station_metadata",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "station_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 2,
+            "tool_name": "load_station_history",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "historical_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 3,
+            "tool_name": "load_era5_forcing",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 4,
+            "tool_name": "match_footprint",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "ISMN_availability_metadata",
+              "station_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 5,
+            "tool_name": "reject_if_unreliable",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ISMN_availability_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 6,
+            "tool_name": "compute_water_balance",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "model_config"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 7,
+            "tool_name": "run_kalman_assimilation",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "model_config"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 8,
+            "tool_name": "compute_baselines",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "historical_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 9,
+            "tool_name": "compute_uncertainty",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "historical_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 10,
+            "tool_name": "compute_metrics",
+            "execution_scope": "evaluator",
+            "accessed_inputs": [
+              "test_label"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          }
+        ],
+        "violations": 0,
+        "passed": true,
+        "score": 1.0
+      }
+    }
+  },
+  "metrics": {
+    "experiment": "arm1_2017_2018",
+    "task_id": "HB_0001",
+    "mode": "station-aware_forecasting",
+    "evaluation_period": {
+      "start": "2018-01-01",
+      "end": "2018-08-09"
+    },
+    "matched_days_total": 333,
+    "matched_days_test": 191,
+    "best_method": "persistence",
+    "metrics": {
+      "era5_baseline": {
+        "n": 191,
+        "rmse": 0.11036780303731121,
+        "bias": 0.10030113612565444,
+        "correlation": 0.5024311142702407,
+        "ubrmse": 0.0460514281991955,
+        "nse": -6.829804810413449,
+        "kge": 0.0189049860260897
+      },
+      "water_balance": {
+        "n": 191,
+        "rmse": 0.09390593093098916,
+        "bias": 0.030748947643979056,
+        "correlation": 0.49424921541693423,
+        "ubrmse": 0.08872894726527268,
+        "nse": -4.668291614638112,
+        "kge": -0.66648461978319
+      },
+      "kalman_analysis": {
+        "n": 191,
+        "rmse": 0.10517392953773466,
+        "bias": 0.07206185340314136,
+        "correlation": 0.3870293064958198,
+        "ubrmse": 0.07660708021137826,
+        "nse": -6.110208583167749,
+        "kge": -0.3800104472557517,
+        "mean_predicted_sigma": 0.11362334031413614,
+        "coverage_95": 0.9581151832460733,
+        "calibration_error_95": 0.008115183246073299
+      },
+      "persistence": {
+        "n": 191,
+        "rmse": 0.023144132023483165,
+        "bias": -0.00016387434554973826,
+        "correlation": 0.8285083033859799,
+        "ubrmse": 0.023143551851850432,
+        "nse": 0.6556913477065438,
+        "kge": 0.8284619011491829
+      },
+      "climatology": {
+        "n": 191,
+        "rmse": 0.044483135765053104,
+        "bias": 0.016466905759162303,
+        "correlation": -0.06107479389073668,
+        "ubrmse": 0.041323000643842575,
+        "nse": -0.2719116036319602,
+        "kge": -0.3017583527768344
+      },
+      "linear_regression": {
+        "n": 191,
+        "rmse": 0.03809538771150718,
+        "bias": -0.00560269109947644,
+        "correlation": 0.5024307717151605,
+        "ubrmse": 0.0376811414016866,
+        "nse": 0.06715188953244233,
+        "kge": 0.49218832303530824
+      }
+    },
+    "baseline_eligibility": {
+      "eligible": [
+        "era5_baseline",
+        "water_balance",
+        "kalman_analysis",
+        "persistence",
+        "climatology",
+        "linear_regression"
+      ],
+      "excluded": {}
+    },
+    "uncertainty_calibration": {
+      "method": "legal-history RMSE-to-spread scaling",
+      "training_days": 142,
+      "scale_factor": 3.6432915589074297
+    },
+    "quality_control": {
+      "accepted": true,
+      "matched_days": 333,
+      "missing_fraction": 0.0876712328767123
+    },
+    "matching": {
+      "temporal_rule": "same-day",
+      "depth_rule": "surface-compatible",
+      "spatial_rule": "station-to-ERA5 point; SMAP/GLDAS footprint unavailable in v0.2"
+    },
+    "physical_checks": {
+      "water_balance_bounds": true,
+      "analysis_bounds": true,
+      "positive_uncertainty": true
+    },
+    "split": {
+      "type": "leave-year-out",
+      "test_year": 2018
+    },
+    "limitations": [
+      "Hydro-Bench v0.2 currently has one real station; leave-station-out generalisation is not claimable.",
+      "SMAP and GLDAS are unavailable; no satellite footprint claim is made.",
+      "ISMN is hidden evaluator ground truth; only mode-permitted history can enter agent baselines."
+    ],
+    "run_id": "demo_ui",
+    "trajectory_score": {
+      "schema_version": "1.0",
+      "task_id": "HB_0001",
+      "ground_truth_path": [
+        "get_station_metadata",
+        "load_station_history",
+        "load_era5_forcing",
+        "match_footprint",
+        "reject_if_unreliable",
+        "compute_water_balance",
+        "run_kalman_assimilation",
+        "compute_baselines",
+        "compute_uncertainty",
+        "compute_metrics"
+      ],
+      "agent_path": [
+        "get_station_metadata",
+        "load_station_history",
+        "load_era5_forcing",
+        "match_footprint",
+        "reject_if_unreliable",
+        "compute_water_balance",
+        "run_kalman_assimilation",
+        "compute_baselines",
+        "compute_uncertainty",
+        "compute_metrics"
+      ],
+      "step_by_step": {
+        "TAO": 1.0,
+        "TIO": 1.0,
+        "TEM": 1.0,
+        "Param": 1.0,
+        "Efficiency": 1.0,
+        "Accuracy": 1.0,
+        "Hydro-QC": 1.0,
+        "Phys-Consistency": 1.0,
+        "Leakage-Safety": 1.0
+      },
+      "end_to_end": 1.0,
+      "all_required_tools_executed": true,
+      "leakage_audit": {
+        "allowed_inputs": [
+          "ERA5",
+          "ISMN_availability_metadata",
+          "historical_ISMN",
+          "model_config",
+          "station_metadata"
+        ],
+        "forbidden_inputs": [
+          "current_day_ISMN",
+          "future_ISMN",
+          "pre_gap_ISMN",
+          "test_label"
+        ],
+        "step_audits": [
+          {
+            "step": 1,
+            "tool_name": "get_station_metadata",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "station_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 2,
+            "tool_name": "load_station_history",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "historical_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 3,
+            "tool_name": "load_era5_forcing",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 4,
+            "tool_name": "match_footprint",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "ISMN_availability_metadata",
+              "station_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 5,
+            "tool_name": "reject_if_unreliable",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ISMN_availability_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 6,
+            "tool_name": "compute_water_balance",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "model_config"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 7,
+            "tool_name": "run_kalman_assimilation",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "model_config"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 8,
+            "tool_name": "compute_baselines",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "historical_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 9,
+            "tool_name": "compute_uncertainty",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "historical_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 10,
+            "tool_name": "compute_metrics",
+            "execution_scope": "evaluator",
+            "accessed_inputs": [
+              "test_label"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          }
+        ],
+        "violations": 0,
+        "passed": true,
+        "score": 1.0
+      }
+    },
+    "environment": {
+      "created_utc": "2026-06-19T06:50:21.777295+00:00",
+      "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "git_revision": "f5e5041a58b98a1677a9f69881845b97587141f8",
+      "cuda_visible_devices": null,
+      "gpu_inventory": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+          "uuid": "GPU-89643ea1-90ac-a568-d716-38de57a7839c",
+          "memory_mib": 12227
+        },
+        {
+          "index": 1,
+          "name": "Quadro RTX 6000",
+          "uuid": "GPU-87ef18db-99d5-7986-c4bb-3fddb995332b",
+          "memory_mib": 24576
+        }
+      ],
+      "requested_device": {
+        "requested_gpu_index": 1,
+        "requested_gpu_name": "Quadro RTX 6000",
+        "cuda_required": false
+      },
+      "compute_backend": "python-standard-library-cpu",
+      "gpu_note": "Process affinity is recorded; v0.2 contains no CUDA kernels and does not claim GPU acceleration."
+    }
+  },
+  "task": {
+    "schema_version": "2.0",
+    "task_id": "HB_0001",
+    "category": "soil_moisture_retrieval",
+    "mode": "station-aware_forecasting",
+    "station_id": "US_COSMOS_ARM1",
+    "time_range": [
+      "2017-08-10",
+      "2018-08-09"
+    ],
+    "question": "Forecast 2018 daily soil moisture with rolling access to prior station observations; compare legal station-aware baselines and audit label leakage.",
+    "allowed_inputs": [
+      "station_metadata",
+      "ERA5",
+      "model_config",
+      "ISMN_availability_metadata",
+      "historical_ISMN"
+    ],
+    "forbidden_inputs": [
+      "future_ISMN",
+      "current_day_ISMN",
+      "test_label",
+      "pre_gap_ISMN"
+    ],
+    "required_tools": [
+      "get_station_metadata",
+      "load_station_history",
+      "load_era5_forcing",
+      "match_footprint",
+      "reject_if_unreliable",
+      "compute_water_balance",
+      "run_kalman_assimilation",
+      "compute_baselines",
+      "compute_uncertainty",
+      "compute_metrics"
+    ],
+    "expected_outputs": [
+      "daily_estimates.csv",
+      "metrics.json",
+      "trajectory.json",
+      "report.html",
+      "figures/time_series.svg",
+      "figures/scatter.svg",
+      "figures/uncertainty.svg",
+      "figures/map.svg"
+    ],
+    "split": {
+      "type": "leave-year-out",
+      "test_year": 2018
+    },
+    "gold_answer": {
+      "best_method": "persistence",
+      "rmse_max": 0.12,
+      "coverage_95_min": 0.9,
+      "conclusion_scope": "single-station mode-specific evidence only"
+    },
+    "scoring": {
+      "required_parameters": {
+        "get_station_metadata": {
+          "station_id": "US_COSMOS_ARM1"
+        },
+        "load_era5_forcing": {
+          "start": "2017-08-10",
+          "end": "2018-08-09"
+        },
+        "match_footprint": {
+          "temporal_rule": "same-day",
+          "depth_rule": "surface-compatible"
+        }
+      },
+      "weights": {
+        "TAO": 0.1,
+        "TIO": 0.1,
+        "TEM": 0.1,
+        "Param": 0.1,
+        "Efficiency": 0.08,
+        "Accuracy": 0.14,
+        "Hydro-QC": 0.1,
+        "Phys-Consistency": 0.1,
+        "Leakage-Safety": 0.18
+      }
+    }
+  }
+}

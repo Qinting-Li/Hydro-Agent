@@ -1,0 +1,2264 @@
+{
+  "trajectory": {
+    "schema_version": "1.0",
+    "task_id": "HB_0003",
+    "steps": [
+      {
+        "step": 1,
+        "tool_name": "get_station_metadata",
+        "input": {
+          "station_id": "US_COSMOS_ARM1"
+        },
+        "output_summary": {
+          "station_id": "US_COSMOS_ARM1",
+          "network": "COSMOS",
+          "lat": 36.6054,
+          "lon": -97.4878,
+          "depth_m": [
+            0.0,
+            0.19
+          ],
+          "climate_zone": "temperate",
+          "land_cover": "grassland"
+        },
+        "started_utc": "2026-06-19T07:01:57.027370+00:00",
+        "runtime_ms": 0.014,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "station_metadata"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 2,
+        "tool_name": "load_station_history",
+        "input": {},
+        "output_summary": {
+          "history_days": 201,
+          "last_history_date": "2018-02-28",
+          "label_visibility": "pre_gap_ISMN"
+        },
+        "started_utc": "2026-06-19T07:01:57.027370+00:00",
+        "runtime_ms": 0.021,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "pre_gap_ISMN"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 3,
+        "tool_name": "load_era5_forcing",
+        "input": {
+          "start": "2017-08-10",
+          "end": "2018-08-09"
+        },
+        "output_summary": {
+          "path": "data\\raw\\era5_arm1.json",
+          "valid_daily_observations": 365,
+          "variables": [
+            "precipitation_mm",
+            "temperature_c",
+            "et0_mm",
+            "era5_soil_moisture"
+          ]
+        },
+        "started_utc": "2026-06-19T07:01:57.027370+00:00",
+        "runtime_ms": 7.662,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ERA5"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 4,
+        "tool_name": "match_footprint",
+        "input": {
+          "temporal_rule": "same-day",
+          "depth_rule": "surface-compatible"
+        },
+        "output_summary": {
+          "matched_days": 333,
+          "temporal_rule": "same-day",
+          "depth_rule": "surface-compatible",
+          "spatial_rule": "station-to-ERA5 point; SMAP/GLDAS footprint unavailable in v0.2"
+        },
+        "started_utc": "2026-06-19T07:01:57.034732+00:00",
+        "runtime_ms": 0.106,
+        "status": "warning",
+        "warnings": [
+          "SMAP footprint and GLDAS grid matching remain unavailable; regional claims are prohibited.",
+          "Station support depth exceeds the preferred 0-0.10 m surface target."
+        ],
+        "qc": "warning",
+        "accessed_inputs": [
+          "ERA5",
+          "station_metadata",
+          "ISMN_availability_metadata"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 5,
+        "tool_name": "reject_if_unreliable",
+        "input": {},
+        "output_summary": {
+          "accepted": true,
+          "matched_days": 333,
+          "missing_fraction": 0.0876712328767123
+        },
+        "started_utc": "2026-06-19T07:01:57.035728+00:00",
+        "runtime_ms": 0.01,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ISMN_availability_metadata"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 6,
+        "tool_name": "compute_water_balance",
+        "input": {},
+        "output_summary": {
+          "days": 333,
+          "minimum": 0.08,
+          "maximum": 0.46,
+          "bounded": true
+        },
+        "started_utc": "2026-06-19T07:01:57.035728+00:00",
+        "runtime_ms": 0.246,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ERA5",
+          "model_config"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 7,
+        "tool_name": "run_kalman_assimilation",
+        "input": {},
+        "output_summary": {
+          "days": 333,
+          "observations_assimilated": 111,
+          "state_bounded": true,
+          "uncertainty_positive": true
+        },
+        "started_utc": "2026-06-19T07:01:57.035728+00:00",
+        "runtime_ms": 0.932,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ERA5",
+          "model_config"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 8,
+        "tool_name": "compute_baselines",
+        "input": {},
+        "output_summary": {
+          "eligible": [
+            "era5_baseline",
+            "water_balance",
+            "kalman_analysis",
+            "persistence",
+            "climatology",
+            "linear_regression"
+          ],
+          "excluded": {},
+          "linear_model": {
+            "linear_intercept": -0.03616441251854774,
+            "linear_slope": 0.6618387801575345,
+            "history_days": 201
+          },
+          "persistence_rule": "last pre-gap observation held through gap"
+        },
+        "started_utc": "2026-06-19T07:01:57.035728+00:00",
+        "runtime_ms": 0.328,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "ERA5",
+          "pre_gap_ISMN"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 9,
+        "tool_name": "compute_uncertainty",
+        "input": {},
+        "output_summary": {
+          "method": "legal-history RMSE-to-spread scaling",
+          "training_days": 201,
+          "scale_factor": 3.818289704293404
+        },
+        "started_utc": "2026-06-19T07:01:57.035728+00:00",
+        "runtime_ms": 0.124,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "pre_gap_ISMN"
+        ],
+        "execution_scope": "agent"
+      },
+      {
+        "step": 10,
+        "tool_name": "compute_metrics",
+        "input": {},
+        "output_summary": {
+          "test_days": 55,
+          "best_method": "linear_regression",
+          "best_rmse": 0.03729076714294158,
+          "kalman_coverage_95": 0.9818181818181818
+        },
+        "started_utc": "2026-06-19T07:01:57.035728+00:00",
+        "runtime_ms": 0.296,
+        "status": "success",
+        "warnings": [],
+        "qc": "pass",
+        "accessed_inputs": [
+          "test_label"
+        ],
+        "execution_scope": "evaluator"
+      }
+    ],
+    "evaluation": {
+      "schema_version": "1.0",
+      "task_id": "HB_0003",
+      "ground_truth_path": [
+        "get_station_metadata",
+        "load_station_history",
+        "load_era5_forcing",
+        "match_footprint",
+        "reject_if_unreliable",
+        "compute_water_balance",
+        "run_kalman_assimilation",
+        "compute_baselines",
+        "compute_uncertainty",
+        "compute_metrics"
+      ],
+      "agent_path": [
+        "get_station_metadata",
+        "load_station_history",
+        "load_era5_forcing",
+        "match_footprint",
+        "reject_if_unreliable",
+        "compute_water_balance",
+        "run_kalman_assimilation",
+        "compute_baselines",
+        "compute_uncertainty",
+        "compute_metrics"
+      ],
+      "step_by_step": {
+        "TAO": 1.0,
+        "TIO": 1.0,
+        "TEM": 1.0,
+        "Param": 1.0,
+        "Efficiency": 1.0,
+        "Accuracy": 1.0,
+        "Hydro-QC": 1.0,
+        "Phys-Consistency": 1.0,
+        "Leakage-Safety": 1.0
+      },
+      "end_to_end": 1.0,
+      "all_required_tools_executed": true,
+      "leakage_audit": {
+        "allowed_inputs": [
+          "ERA5",
+          "ISMN_availability_metadata",
+          "model_config",
+          "pre_gap_ISMN",
+          "station_metadata"
+        ],
+        "forbidden_inputs": [
+          "current_day_ISMN",
+          "future_ISMN",
+          "historical_ISMN",
+          "test_label"
+        ],
+        "step_audits": [
+          {
+            "step": 1,
+            "tool_name": "get_station_metadata",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "station_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 2,
+            "tool_name": "load_station_history",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "pre_gap_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 3,
+            "tool_name": "load_era5_forcing",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 4,
+            "tool_name": "match_footprint",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "ISMN_availability_metadata",
+              "station_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 5,
+            "tool_name": "reject_if_unreliable",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ISMN_availability_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 6,
+            "tool_name": "compute_water_balance",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "model_config"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 7,
+            "tool_name": "run_kalman_assimilation",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "model_config"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 8,
+            "tool_name": "compute_baselines",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "pre_gap_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 9,
+            "tool_name": "compute_uncertainty",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "pre_gap_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 10,
+            "tool_name": "compute_metrics",
+            "execution_scope": "evaluator",
+            "accessed_inputs": [
+              "test_label"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          }
+        ],
+        "violations": 0,
+        "passed": true,
+        "score": 1.0
+      }
+    }
+  },
+  "metrics": {
+    "experiment": "arm1_2017_2018",
+    "task_id": "HB_0003",
+    "mode": "gap-filling",
+    "evaluation_period": {
+      "start": "2018-03-01",
+      "end": "2018-04-29"
+    },
+    "matched_days_total": 333,
+    "matched_days_test": 55,
+    "best_method": "linear_regression",
+    "metrics": {
+      "era5_baseline": {
+        "n": 55,
+        "rmse": 0.09296328735640265,
+        "bias": 0.08622956363636362,
+        "correlation": 0.7374159419500673,
+        "ubrmse": 0.03473665428896981,
+        "nse": -5.168925447507719,
+        "kge": 0.23530725532126773
+      },
+      "water_balance": {
+        "n": 55,
+        "rmse": 0.08784622848477901,
+        "bias": 0.05906474545454545,
+        "correlation": 0.7758603862601509,
+        "ubrmse": 0.06502550040860702,
+        "nse": -4.5084931966430615,
+        "kge": -0.4735894262650604
+      },
+      "kalman_analysis": {
+        "n": 55,
+        "rmse": 0.09729974006841856,
+        "bias": 0.07685178181818181,
+        "correlation": 0.746023573857639,
+        "ubrmse": 0.05967447568896099,
+        "nse": -5.757871606759483,
+        "kge": -0.3380344735448071,
+        "mean_predicted_sigma": 0.11875132727272728,
+        "coverage_95": 0.9818181818181818,
+        "calibration_error_95": 0.03181818181818186
+      },
+      "persistence": {
+        "n": 55,
+        "rmse": 0.05082040352975636,
+        "bias": 0.034377218181818166,
+        "correlation": NaN,
+        "ubrmse": 0.03742886967311385,
+        "nse": -0.8435834233883432,
+        "kge": NaN
+      },
+      "climatology": {
+        "n": 55,
+        "rmse": 0.0393793415887523,
+        "bias": -0.012239781818181823,
+        "correlation": NaN,
+        "ubrmse": 0.03742886967311386,
+        "nse": -0.10693846078183644,
+        "kge": NaN
+      },
+      "linear_regression": {
+        "n": 55,
+        "rmse": 0.03729076714294158,
+        "bias": -0.026647527272727276,
+        "correlation": 0.7374160848067214,
+        "ubrmse": 0.02608659817527665,
+        "nse": 0.007365851582197713,
+        "kge": 0.66371628228359
+      }
+    },
+    "baseline_eligibility": {
+      "eligible": [
+        "era5_baseline",
+        "water_balance",
+        "kalman_analysis",
+        "persistence",
+        "climatology",
+        "linear_regression"
+      ],
+      "excluded": {}
+    },
+    "uncertainty_calibration": {
+      "method": "legal-history RMSE-to-spread scaling",
+      "training_days": 201,
+      "scale_factor": 3.818289704293404
+    },
+    "quality_control": {
+      "accepted": true,
+      "matched_days": 333,
+      "missing_fraction": 0.0876712328767123
+    },
+    "matching": {
+      "temporal_rule": "same-day",
+      "depth_rule": "surface-compatible",
+      "spatial_rule": "station-to-ERA5 point; SMAP/GLDAS footprint unavailable in v0.2"
+    },
+    "physical_checks": {
+      "water_balance_bounds": true,
+      "analysis_bounds": true,
+      "positive_uncertainty": true
+    },
+    "split": {
+      "type": "blocked-gap"
+    },
+    "limitations": [
+      "Hydro-Bench v0.2 currently has one real station; leave-station-out generalisation is not claimable.",
+      "SMAP and GLDAS are unavailable; no satellite footprint claim is made.",
+      "ISMN is hidden evaluator ground truth; only mode-permitted history can enter agent baselines."
+    ],
+    "run_id": "demo_ui_3",
+    "trajectory_score": {
+      "schema_version": "1.0",
+      "task_id": "HB_0003",
+      "ground_truth_path": [
+        "get_station_metadata",
+        "load_station_history",
+        "load_era5_forcing",
+        "match_footprint",
+        "reject_if_unreliable",
+        "compute_water_balance",
+        "run_kalman_assimilation",
+        "compute_baselines",
+        "compute_uncertainty",
+        "compute_metrics"
+      ],
+      "agent_path": [
+        "get_station_metadata",
+        "load_station_history",
+        "load_era5_forcing",
+        "match_footprint",
+        "reject_if_unreliable",
+        "compute_water_balance",
+        "run_kalman_assimilation",
+        "compute_baselines",
+        "compute_uncertainty",
+        "compute_metrics"
+      ],
+      "step_by_step": {
+        "TAO": 1.0,
+        "TIO": 1.0,
+        "TEM": 1.0,
+        "Param": 1.0,
+        "Efficiency": 1.0,
+        "Accuracy": 1.0,
+        "Hydro-QC": 1.0,
+        "Phys-Consistency": 1.0,
+        "Leakage-Safety": 1.0
+      },
+      "end_to_end": 1.0,
+      "all_required_tools_executed": true,
+      "leakage_audit": {
+        "allowed_inputs": [
+          "ERA5",
+          "ISMN_availability_metadata",
+          "model_config",
+          "pre_gap_ISMN",
+          "station_metadata"
+        ],
+        "forbidden_inputs": [
+          "current_day_ISMN",
+          "future_ISMN",
+          "historical_ISMN",
+          "test_label"
+        ],
+        "step_audits": [
+          {
+            "step": 1,
+            "tool_name": "get_station_metadata",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "station_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 2,
+            "tool_name": "load_station_history",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "pre_gap_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 3,
+            "tool_name": "load_era5_forcing",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 4,
+            "tool_name": "match_footprint",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "ISMN_availability_metadata",
+              "station_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 5,
+            "tool_name": "reject_if_unreliable",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ISMN_availability_metadata"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 6,
+            "tool_name": "compute_water_balance",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "model_config"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 7,
+            "tool_name": "run_kalman_assimilation",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "model_config"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 8,
+            "tool_name": "compute_baselines",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "ERA5",
+              "pre_gap_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 9,
+            "tool_name": "compute_uncertainty",
+            "execution_scope": "agent",
+            "accessed_inputs": [
+              "pre_gap_ISMN"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          },
+          {
+            "step": 10,
+            "tool_name": "compute_metrics",
+            "execution_scope": "evaluator",
+            "accessed_inputs": [
+              "test_label"
+            ],
+            "forbidden_hits": [],
+            "undeclared_hits": [],
+            "passed": true
+          }
+        ],
+        "violations": 0,
+        "passed": true,
+        "score": 1.0
+      }
+    },
+    "environment": {
+      "created_utc": "2026-06-19T07:01:56.827420+00:00",
+      "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "git_revision": "f5e5041a58b98a1677a9f69881845b97587141f8",
+      "cuda_visible_devices": null,
+      "gpu_inventory": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+          "uuid": "GPU-89643ea1-90ac-a568-d716-38de57a7839c",
+          "memory_mib": 12227
+        },
+        {
+          "index": 1,
+          "name": "Quadro RTX 6000",
+          "uuid": "GPU-87ef18db-99d5-7986-c4bb-3fddb995332b",
+          "memory_mib": 24576
+        }
+      ],
+      "requested_device": {
+        "requested_gpu_index": 1,
+        "requested_gpu_name": "Quadro RTX 6000",
+        "cuda_required": false
+      },
+      "compute_backend": "python-standard-library-cpu",
+      "gpu_note": "Process affinity is recorded; v0.2 contains no CUDA kernels and does not claim GPU acceleration."
+    }
+  },
+  "task": {
+    "schema_version": "2.0",
+    "task_id": "HB_0003",
+    "category": "gap_filling",
+    "mode": "gap-filling",
+    "station_id": "US_COSMOS_ARM1",
+    "time_range": [
+      "2017-08-10",
+      "2018-08-09"
+    ],
+    "question": "Fill a blocked 61-day station-observation gap using only observations before the gap plus ERA5 and physical models.",
+    "allowed_inputs": [
+      "station_metadata",
+      "ERA5",
+      "model_config",
+      "ISMN_availability_metadata",
+      "pre_gap_ISMN"
+    ],
+    "forbidden_inputs": [
+      "historical_ISMN",
+      "future_ISMN",
+      "current_day_ISMN",
+      "test_label"
+    ],
+    "required_tools": [
+      "get_station_metadata",
+      "load_station_history",
+      "load_era5_forcing",
+      "match_footprint",
+      "reject_if_unreliable",
+      "compute_water_balance",
+      "run_kalman_assimilation",
+      "compute_baselines",
+      "compute_uncertainty",
+      "compute_metrics"
+    ],
+    "expected_outputs": [
+      "daily_estimates.csv",
+      "metrics.json",
+      "trajectory.json",
+      "report.html",
+      "figures/time_series.svg",
+      "figures/scatter.svg",
+      "figures/uncertainty.svg",
+      "figures/map.svg"
+    ],
+    "split": {
+      "type": "blocked-gap"
+    },
+    "gold_answer": {
+      "best_method": "linear_regression",
+      "rmse_max": 0.12,
+      "coverage_95_min": 0.9,
+      "conclusion_scope": "single-station mode-specific evidence only"
+    },
+    "scoring": {
+      "required_parameters": {
+        "get_station_metadata": {
+          "station_id": "US_COSMOS_ARM1"
+        },
+        "load_era5_forcing": {
+          "start": "2017-08-10",
+          "end": "2018-08-09"
+        },
+        "match_footprint": {
+          "temporal_rule": "same-day",
+          "depth_rule": "surface-compatible"
+        }
+      },
+      "weights": {
+        "TAO": 0.1,
+        "TIO": 0.1,
+        "TEM": 0.1,
+        "Param": 0.1,
+        "Efficiency": 0.08,
+        "Accuracy": 0.14,
+        "Hydro-QC": 0.1,
+        "Phys-Consistency": 0.1,
+        "Leakage-Safety": 0.18
+      }
+    },
+    "gap": [
+      "2018-03-01",
+      "2018-04-30"
+    ]
+  },
+  "daily_rows": [
+    {
+      "date": "2017-08-10",
+      "precipitation_mm": 4.9,
+      "et0_mm": 4.93,
+      "era5_m3m3": 0.2575,
+      "water_balance_m3m3": 0.206454,
+      "analysis_m3m3": 0.238616,
+      "analysis_sigma_m3m3": 0.03175,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.134259,
+      "ismn_truth_m3m3": 0.212792
+    },
+    {
+      "date": "2017-08-13",
+      "precipitation_mm": 0.2,
+      "et0_mm": 3.86,
+      "era5_m3m3": 0.365,
+      "water_balance_m3m3": 0.418109,
+      "analysis_m3m3": 0.390882,
+      "analysis_sigma_m3m3": 0.02864,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.205407,
+      "ismn_truth_m3m3": 0.259792
+    },
+    {
+      "date": "2017-08-16",
+      "precipitation_mm": 13.7,
+      "et0_mm": 4.78,
+      "era5_m3m3": 0.38875,
+      "water_balance_m3m3": 0.46,
+      "analysis_m3m3": 0.425581,
+      "analysis_sigma_m3m3": 0.027802,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.221125,
+      "ismn_truth_m3m3": 0.249
+    },
+    {
+      "date": "2017-08-19",
+      "precipitation_mm": 0.1,
+      "et0_mm": 6.13,
+      "era5_m3m3": 0.336125,
+      "water_balance_m3m3": 0.371029,
+      "analysis_m3m3": 0.345311,
+      "analysis_sigma_m3m3": 0.02757,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.186296,
+      "ismn_truth_m3m3": 0.215625
+    },
+    {
+      "date": "2017-08-22",
+      "precipitation_mm": 3.8,
+      "et0_mm": 5.12,
+      "era5_m3m3": 0.276042,
+      "water_balance_m3m3": 0.317995,
+      "analysis_m3m3": 0.288638,
+      "analysis_sigma_m3m3": 0.027505,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.146531,
+      "ismn_truth_m3m3": 0.1715
+    },
+    {
+      "date": "2017-08-25",
+      "precipitation_mm": 0.2,
+      "et0_mm": 3.48,
+      "era5_m3m3": 0.257875,
+      "water_balance_m3m3": 0.254198,
+      "analysis_m3m3": 0.24044,
+      "analysis_sigma_m3m3": 0.027487,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.134507,
+      "ismn_truth_m3m3": 0.142542
+    },
+    {
+      "date": "2017-08-28",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.41,
+      "era5_m3m3": 0.233333,
+      "water_balance_m3m3": 0.188669,
+      "analysis_m3m3": 0.202489,
+      "analysis_sigma_m3m3": 0.027482,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.118264,
+      "ismn_truth_m3m3": 0.126
+    },
+    {
+      "date": "2017-08-31",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.06,
+      "era5_m3m3": 0.199792,
+      "water_balance_m3m3": 0.112607,
+      "analysis_m3m3": 0.161054,
+      "analysis_sigma_m3m3": 0.027481,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.096066,
+      "ismn_truth_m3m3": 0.101381
+    },
+    {
+      "date": "2017-09-03",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.17,
+      "era5_m3m3": 0.209667,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.152113,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.102601,
+      "ismn_truth_m3m3": 0.133348
+    },
+    {
+      "date": "2017-09-06",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.11,
+      "era5_m3m3": 0.189833,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.131839,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.089474,
+      "ismn_truth_m3m3": 0.084167
+    },
+    {
+      "date": "2017-09-09",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.66,
+      "era5_m3m3": 0.182083,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.128181,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.084345,
+      "ismn_truth_m3m3": 0.090208
+    },
+    {
+      "date": "2017-09-12",
+      "precipitation_mm": 0.0,
+      "et0_mm": 4.34,
+      "era5_m3m3": 0.169208,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.122104,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.075824,
+      "ismn_truth_m3m3": 0.086167
+    },
+    {
+      "date": "2017-09-15",
+      "precipitation_mm": 0.0,
+      "et0_mm": 6.33,
+      "era5_m3m3": 0.165458,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.120334,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.073342,
+      "ismn_truth_m3m3": 0.091846
+    },
+    {
+      "date": "2017-09-18",
+      "precipitation_mm": 3.4,
+      "et0_mm": 3.89,
+      "era5_m3m3": 0.20725,
+      "water_balance_m3m3": 0.099697,
+      "analysis_m3m3": 0.15583,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.101002,
+      "ismn_truth_m3m3": 0.12
+    },
+    {
+      "date": "2017-09-21",
+      "precipitation_mm": 0.7,
+      "et0_mm": 5.81,
+      "era5_m3m3": 0.191917,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.132822,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.090854,
+      "ismn_truth_m3m3": 0.133875
+    },
+    {
+      "date": "2017-09-24",
+      "precipitation_mm": 0.1,
+      "et0_mm": 5.27,
+      "era5_m3m3": 0.176458,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.125526,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.080622,
+      "ismn_truth_m3m3": 0.098583
+    },
+    {
+      "date": "2017-09-27",
+      "precipitation_mm": 12.3,
+      "et0_mm": 1.63,
+      "era5_m3m3": 0.370292,
+      "water_balance_m3m3": 0.339886,
+      "analysis_m3m3": 0.373884,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.208909,
+      "ismn_truth_m3m3": 0.20525
+    },
+    {
+      "date": "2017-09-30",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.97,
+      "era5_m3m3": 0.283,
+      "water_balance_m3m3": 0.280303,
+      "analysis_m3m3": 0.293571,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.11799,
+      "linear_regression_m3m3": 0.151136,
+      "ismn_truth_m3m3": 0.17225
+    },
+    {
+      "date": "2017-10-03",
+      "precipitation_mm": 0.2,
+      "et0_mm": 3.83,
+      "era5_m3m3": 0.239292,
+      "water_balance_m3m3": 0.211543,
+      "analysis_m3m3": 0.231645,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.122208,
+      "ismn_truth_m3m3": 0.160667
+    },
+    {
+      "date": "2017-10-06",
+      "precipitation_mm": 6.2,
+      "et0_mm": 3.65,
+      "era5_m3m3": 0.394875,
+      "water_balance_m3m3": 0.459,
+      "analysis_m3m3": 0.428735,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.225179,
+      "ismn_truth_m3m3": 0.275375
+    },
+    {
+      "date": "2017-10-09",
+      "precipitation_mm": 0.3,
+      "et0_mm": 3.61,
+      "era5_m3m3": 0.34,
+      "water_balance_m3m3": 0.378938,
+      "analysis_m3m3": 0.351749,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.188861,
+      "ismn_truth_m3m3": 0.217737
+    },
+    {
+      "date": "2017-10-12",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.82,
+      "era5_m3m3": 0.306417,
+      "water_balance_m3m3": 0.312123,
+      "analysis_m3m3": 0.301014,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.166634,
+      "ismn_truth_m3m3": 0.192929
+    },
+    {
+      "date": "2017-10-15",
+      "precipitation_mm": 19.5,
+      "et0_mm": 3.74,
+      "era5_m3m3": 0.37125,
+      "water_balance_m3m3": 0.452077,
+      "analysis_m3m3": 0.408063,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.209543,
+      "ismn_truth_m3m3": 0.191583
+    },
+    {
+      "date": "2017-10-18",
+      "precipitation_mm": 0.0,
+      "et0_mm": 4.27,
+      "era5_m3m3": 0.3065,
+      "water_balance_m3m3": 0.345997,
+      "analysis_m3m3": 0.314541,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.166689,
+      "ismn_truth_m3m3": 0.148458
+    },
+    {
+      "date": "2017-10-21",
+      "precipitation_mm": 9.7,
+      "et0_mm": 3.18,
+      "era5_m3m3": 0.280083,
+      "water_balance_m3m3": 0.38843,
+      "analysis_m3m3": 0.323389,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.149205,
+      "ismn_truth_m3m3": 0.16075
+    },
+    {
+      "date": "2017-10-24",
+      "precipitation_mm": 0.0,
+      "et0_mm": 4.63,
+      "era5_m3m3": 0.339625,
+      "water_balance_m3m3": 0.376114,
+      "analysis_m3m3": 0.358892,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.188613,
+      "ismn_truth_m3m3": 0.175917
+    },
+    {
+      "date": "2017-10-27",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.81,
+      "era5_m3m3": 0.296917,
+      "water_balance_m3m3": 0.301717,
+      "analysis_m3m3": 0.293363,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.160347,
+      "ismn_truth_m3m3": 0.140125
+    },
+    {
+      "date": "2017-10-30",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.42,
+      "era5_m3m3": 0.270083,
+      "water_balance_m3m3": 0.256837,
+      "analysis_m3m3": 0.258678,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.180688,
+      "linear_regression_m3m3": 0.142587,
+      "ismn_truth_m3m3": 0.126143
+    },
+    {
+      "date": "2017-11-02",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.11,
+      "era5_m3m3": 0.260792,
+      "water_balance_m3m3": 0.228646,
+      "analysis_m3m3": 0.24479,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.136438,
+      "ismn_truth_m3m3": 0.142864
+    },
+    {
+      "date": "2017-11-05",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.38,
+      "era5_m3m3": 0.250667,
+      "water_balance_m3m3": 0.20266,
+      "analysis_m3m3": 0.233842,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.129737,
+      "ismn_truth_m3m3": 0.138958
+    },
+    {
+      "date": "2017-11-08",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.27,
+      "era5_m3m3": 0.243625,
+      "water_balance_m3m3": 0.1792,
+      "analysis_m3m3": 0.226072,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.125076,
+      "ismn_truth_m3m3": 0.122958
+    },
+    {
+      "date": "2017-11-11",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.7,
+      "era5_m3m3": 0.23,
+      "water_balance_m3m3": 0.15234,
+      "analysis_m3m3": 0.213743,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.116059,
+      "ismn_truth_m3m3": 0.116875
+    },
+    {
+      "date": "2017-11-14",
+      "precipitation_mm": 1.4,
+      "et0_mm": 0.62,
+      "era5_m3m3": 0.252125,
+      "water_balance_m3m3": 0.155683,
+      "analysis_m3m3": 0.233624,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.130702,
+      "ismn_truth_m3m3": 0.136042
+    },
+    {
+      "date": "2017-11-17",
+      "precipitation_mm": 0.1,
+      "et0_mm": 2.97,
+      "era5_m3m3": 0.239625,
+      "water_balance_m3m3": 0.125069,
+      "analysis_m3m3": 0.220291,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.122429,
+      "ismn_truth_m3m3": 0.137048
+    },
+    {
+      "date": "2017-11-20",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.7,
+      "era5_m3m3": 0.221833,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.195013,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.110653,
+      "ismn_truth_m3m3": 0.101048
+    },
+    {
+      "date": "2017-11-23",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.35,
+      "era5_m3m3": 0.200667,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.178574,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.096645,
+      "ismn_truth_m3m3": 0.098789
+    },
+    {
+      "date": "2017-11-26",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.55,
+      "era5_m3m3": 0.171917,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.152068,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.077617,
+      "ismn_truth_m3m3": 0.099625
+    },
+    {
+      "date": "2017-11-29",
+      "precipitation_mm": 19.1,
+      "et0_mm": 1.25,
+      "era5_m3m3": 0.323708,
+      "water_balance_m3m3": 0.270386,
+      "analysis_m3m3": 0.317064,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.121867,
+      "linear_regression_m3m3": 0.178078,
+      "ismn_truth_m3m3": 0.131875
+    },
+    {
+      "date": "2017-12-02",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.8,
+      "era5_m3m3": 0.275958,
+      "water_balance_m3m3": 0.242749,
+      "analysis_m3m3": 0.28307,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.146475,
+      "ismn_truth_m3m3": 0.1284
+    },
+    {
+      "date": "2017-12-05",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.87,
+      "era5_m3m3": 0.248125,
+      "water_balance_m3m3": 0.204086,
+      "analysis_m3m3": 0.246162,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.128054,
+      "ismn_truth_m3m3": 0.108792
+    },
+    {
+      "date": "2017-12-08",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.46,
+      "era5_m3m3": 0.237958,
+      "water_balance_m3m3": 0.178537,
+      "analysis_m3m3": 0.2288,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.121325,
+      "ismn_truth_m3m3": 0.092
+    },
+    {
+      "date": "2017-12-11",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.31,
+      "era5_m3m3": 0.207708,
+      "water_balance_m3m3": 0.140506,
+      "analysis_m3m3": 0.198764,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.101305,
+      "ismn_truth_m3m3": 0.089524
+    },
+    {
+      "date": "2017-12-14",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.01,
+      "era5_m3m3": 0.196083,
+      "water_balance_m3m3": 0.104951,
+      "analysis_m3m3": 0.178725,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.093611,
+      "ismn_truth_m3m3": 0.095565
+    },
+    {
+      "date": "2017-12-17",
+      "precipitation_mm": 1.2,
+      "et0_mm": 1.32,
+      "era5_m3m3": 0.201958,
+      "water_balance_m3m3": 0.087277,
+      "analysis_m3m3": 0.180358,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.097499,
+      "ismn_truth_m3m3": 0.10375
+    },
+    {
+      "date": "2017-12-20",
+      "precipitation_mm": 0.1,
+      "et0_mm": 0.48,
+      "era5_m3m3": 0.209792,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.187509,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.102684,
+      "ismn_truth_m3m3": 0.12575
+    },
+    {
+      "date": "2017-12-23",
+      "precipitation_mm": 0.5,
+      "et0_mm": 1.24,
+      "era5_m3m3": 0.227625,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.19872,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.114487,
+      "ismn_truth_m3m3": 0.092875
+    },
+    {
+      "date": "2017-12-26",
+      "precipitation_mm": 0.0,
+      "et0_mm": 0.99,
+      "era5_m3m3": 0.225,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.203122,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.112749,
+      "ismn_truth_m3m3": 0.09475
+    },
+    {
+      "date": "2017-12-31",
+      "precipitation_mm": 0.0,
+      "et0_mm": 0.96,
+      "era5_m3m3": 0.223,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.206759,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.103025,
+      "linear_regression_m3m3": 0.111426,
+      "ismn_truth_m3m3": 0.0745
+    },
+    {
+      "date": "2018-01-03",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.45,
+      "era5_m3m3": 0.224,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.207074,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.112087,
+      "ismn_truth_m3m3": 0.074875
+    },
+    {
+      "date": "2018-01-06",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.69,
+      "era5_m3m3": 0.2225,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.202839,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.111095,
+      "ismn_truth_m3m3": 0.083833
+    },
+    {
+      "date": "2018-01-09",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.55,
+      "era5_m3m3": 0.271583,
+      "water_balance_m3m3": 0.118269,
+      "analysis_m3m3": 0.255491,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.14358,
+      "ismn_truth_m3m3": 0.088125
+    },
+    {
+      "date": "2018-01-12",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.1,
+      "era5_m3m3": 0.272792,
+      "water_balance_m3m3": 0.117111,
+      "analysis_m3m3": 0.263046,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.14438,
+      "ismn_truth_m3m3": 0.088083
+    },
+    {
+      "date": "2018-01-15",
+      "precipitation_mm": 0.0,
+      "et0_mm": 0.91,
+      "era5_m3m3": 0.258833,
+      "water_balance_m3m3": 0.108357,
+      "analysis_m3m3": 0.256435,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.135141,
+      "ismn_truth_m3m3": 0.092333
+    },
+    {
+      "date": "2018-01-18",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.32,
+      "era5_m3m3": 0.254458,
+      "water_balance_m3m3": 0.086986,
+      "analysis_m3m3": 0.244217,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.132246,
+      "ismn_truth_m3m3": 0.0755
+    },
+    {
+      "date": "2018-01-21",
+      "precipitation_mm": 0.2,
+      "et0_mm": 2.12,
+      "era5_m3m3": 0.23675,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.222518,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.120526,
+      "ismn_truth_m3m3": 0.096042
+    },
+    {
+      "date": "2018-01-24",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.17,
+      "era5_m3m3": 0.222542,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.203833,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.111123,
+      "ismn_truth_m3m3": 0.077917
+    },
+    {
+      "date": "2018-01-27",
+      "precipitation_mm": 1.6,
+      "et0_mm": 2.48,
+      "era5_m3m3": 0.215583,
+      "water_balance_m3m3": 0.084411,
+      "analysis_m3m3": 0.192752,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.106517,
+      "ismn_truth_m3m3": 0.097708
+    },
+    {
+      "date": "2018-01-30",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.63,
+      "era5_m3m3": 0.202792,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.17982,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.087496,
+      "linear_regression_m3m3": 0.098051,
+      "ismn_truth_m3m3": 0.096542
+    },
+    {
+      "date": "2018-02-02",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.1,
+      "era5_m3m3": 0.1855,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.159188,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.113115,
+      "linear_regression_m3m3": 0.086607,
+      "ismn_truth_m3m3": 0.086875
+    },
+    {
+      "date": "2018-02-05",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.4,
+      "era5_m3m3": 0.18,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.156072,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.113115,
+      "linear_regression_m3m3": 0.082967,
+      "ismn_truth_m3m3": 0.079917
+    },
+    {
+      "date": "2018-02-08",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.66,
+      "era5_m3m3": 0.179708,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.152968,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.113115,
+      "linear_regression_m3m3": 0.082773,
+      "ismn_truth_m3m3": 0.085833
+    },
+    {
+      "date": "2018-02-11",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.33,
+      "era5_m3m3": 0.182042,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.152815,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.113115,
+      "linear_regression_m3m3": 0.084318,
+      "ismn_truth_m3m3": 0.079792
+    },
+    {
+      "date": "2018-02-14",
+      "precipitation_mm": 0.0,
+      "et0_mm": 2.91,
+      "era5_m3m3": 0.176083,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.146306,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.113115,
+      "linear_regression_m3m3": 0.080374,
+      "ismn_truth_m3m3": 0.095042
+    },
+    {
+      "date": "2018-02-17",
+      "precipitation_mm": 4.4,
+      "et0_mm": 2.78,
+      "era5_m3m3": 0.2,
+      "water_balance_m3m3": 0.111754,
+      "analysis_m3m3": 0.169471,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.113115,
+      "linear_regression_m3m3": 0.096203,
+      "ismn_truth_m3m3": 0.096458
+    },
+    {
+      "date": "2018-02-20",
+      "precipitation_mm": 27.2,
+      "et0_mm": 0.61,
+      "era5_m3m3": 0.310208,
+      "water_balance_m3m3": 0.387309,
+      "analysis_m3m3": 0.381395,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.113115,
+      "linear_regression_m3m3": 0.169143,
+      "ismn_truth_m3m3": 0.127625
+    },
+    {
+      "date": "2018-02-23",
+      "precipitation_mm": 2.7,
+      "et0_mm": 0.6,
+      "era5_m3m3": 0.339167,
+      "water_balance_m3m3": 0.403934,
+      "analysis_m3m3": 0.371644,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.113115,
+      "linear_regression_m3m3": 0.188309,
+      "ismn_truth_m3m3": 0.152611
+    },
+    {
+      "date": "2018-02-26",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.21,
+      "era5_m3m3": 0.32475,
+      "water_balance_m3m3": 0.369243,
+      "analysis_m3m3": 0.338843,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.113115,
+      "linear_regression_m3m3": 0.178768,
+      "ismn_truth_m3m3": 0.222
+    },
+    {
+      "date": "2018-03-01",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.51,
+      "era5_m3m3": 0.290792,
+      "water_balance_m3m3": 0.313559,
+      "analysis_m3m3": 0.293249,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.156293,
+      "ismn_truth_m3m3": 0.175
+    },
+    {
+      "date": "2018-03-05",
+      "precipitation_mm": 0.0,
+      "et0_mm": 4.23,
+      "era5_m3m3": 0.246125,
+      "water_balance_m3m3": 0.254642,
+      "analysis_m3m3": 0.239898,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.126731,
+      "ismn_truth_m3m3": 0.196
+    },
+    {
+      "date": "2018-03-11",
+      "precipitation_mm": 1.0,
+      "et0_mm": 3.45,
+      "era5_m3m3": 0.203042,
+      "water_balance_m3m3": 0.215287,
+      "analysis_m3m3": 0.201723,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.098217,
+      "ismn_truth_m3m3": 0.136
+    },
+    {
+      "date": "2018-03-15",
+      "precipitation_mm": 0.0,
+      "et0_mm": 6.64,
+      "era5_m3m3": 0.165167,
+      "water_balance_m3m3": 0.14685,
+      "analysis_m3m3": 0.148333,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.07315,
+      "ismn_truth_m3m3": 0.108571
+    },
+    {
+      "date": "2018-03-18",
+      "precipitation_mm": 4.3,
+      "et0_mm": 2.32,
+      "era5_m3m3": 0.172458,
+      "water_balance_m3m3": 0.12235,
+      "analysis_m3m3": 0.146783,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.077975,
+      "ismn_truth_m3m3": 0.105429
+    },
+    {
+      "date": "2018-03-21",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.33,
+      "era5_m3m3": 0.277667,
+      "water_balance_m3m3": 0.249813,
+      "analysis_m3m3": 0.27586,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.147606,
+      "ismn_truth_m3m3": 0.116333
+    },
+    {
+      "date": "2018-03-24",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.14,
+      "era5_m3m3": 0.2175,
+      "water_balance_m3m3": 0.176373,
+      "analysis_m3m3": 0.209538,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.107786,
+      "ismn_truth_m3m3": 0.140143
+    },
+    {
+      "date": "2018-03-27",
+      "precipitation_mm": 6.2,
+      "et0_mm": 1.12,
+      "era5_m3m3": 0.256083,
+      "water_balance_m3m3": 0.220625,
+      "analysis_m3m3": 0.254872,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.133321,
+      "ismn_truth_m3m3": 0.130857
+    },
+    {
+      "date": "2018-03-30",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.61,
+      "era5_m3m3": 0.286417,
+      "water_balance_m3m3": 0.243836,
+      "analysis_m3m3": 0.282016,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.153397,
+      "ismn_truth_m3m3": 0.18675
+    },
+    {
+      "date": "2018-04-02",
+      "precipitation_mm": 0.0,
+      "et0_mm": 1.55,
+      "era5_m3m3": 0.243292,
+      "water_balance_m3m3": 0.201345,
+      "analysis_m3m3": 0.241303,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.124856,
+      "ismn_truth_m3m3": 0.14425
+    },
+    {
+      "date": "2018-04-05",
+      "precipitation_mm": 0.1,
+      "et0_mm": 5.04,
+      "era5_m3m3": 0.213417,
+      "water_balance_m3m3": 0.142533,
+      "analysis_m3m3": 0.197087,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.105083,
+      "ismn_truth_m3m3": 0.121273
+    },
+    {
+      "date": "2018-04-08",
+      "precipitation_mm": 0.2,
+      "et0_mm": 2.59,
+      "era5_m3m3": 0.213125,
+      "water_balance_m3m3": 0.137042,
+      "analysis_m3m3": 0.201757,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.10489,
+      "ismn_truth_m3m3": 0.121333
+    },
+    {
+      "date": "2018-04-11",
+      "precipitation_mm": 0.0,
+      "et0_mm": 8.08,
+      "era5_m3m3": 0.1805,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.156205,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.083297,
+      "ismn_truth_m3m3": 0.127333
+    },
+    {
+      "date": "2018-04-14",
+      "precipitation_mm": 0.0,
+      "et0_mm": 3.84,
+      "era5_m3m3": 0.160958,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.11821,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.070364,
+      "ismn_truth_m3m3": 0.105
+    },
+    {
+      "date": "2018-04-17",
+      "precipitation_mm": 0.0,
+      "et0_mm": 7.93,
+      "era5_m3m3": 0.157083,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.116381,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.067799,
+      "ismn_truth_m3m3": 0.093429
+    },
+    {
+      "date": "2018-04-20",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.27,
+      "era5_m3m3": 0.152958,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.114435,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.065069,
+      "ismn_truth_m3m3": 0.089923
+    },
+    {
+      "date": "2018-04-23",
+      "precipitation_mm": 0.0,
+      "et0_mm": 4.1,
+      "era5_m3m3": 0.305667,
+      "water_balance_m3m3": 0.348754,
+      "analysis_m3m3": 0.340644,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.166138,
+      "ismn_truth_m3m3": 0.221833
+    },
+    {
+      "date": "2018-04-26",
+      "precipitation_mm": 0.0,
+      "et0_mm": 4.17,
+      "era5_m3m3": 0.302917,
+      "water_balance_m3m3": 0.353129,
+      "analysis_m3m3": 0.32655,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.164318,
+      "ismn_truth_m3m3": 0.215167
+    },
+    {
+      "date": "2018-04-29",
+      "precipitation_mm": 0.0,
+      "et0_mm": 6.77,
+      "era5_m3m3": 0.207458,
+      "water_balance_m3m3": 0.259224,
+      "analysis_m3m3": 0.22335,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.101139,
+      "ismn_truth_m3m3": 0.172609
+    },
+    {
+      "date": "2018-05-21",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.32,
+      "era5_m3m3": 0.339875,
+      "water_balance_m3m3": 0.40896,
+      "analysis_m3m3": 0.376354,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.188778,
+      "ismn_truth_m3m3": 0.143625
+    },
+    {
+      "date": "2018-05-24",
+      "precipitation_mm": 1.0,
+      "et0_mm": 5.93,
+      "era5_m3m3": 0.248917,
+      "water_balance_m3m3": 0.309106,
+      "analysis_m3m3": 0.270005,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.128579,
+      "ismn_truth_m3m3": 0.104526
+    },
+    {
+      "date": "2018-05-27",
+      "precipitation_mm": 0.0,
+      "et0_mm": 6.99,
+      "era5_m3m3": 0.209375,
+      "water_balance_m3m3": 0.221429,
+      "analysis_m3m3": 0.195093,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.102408,
+      "ismn_truth_m3m3": 0.127143
+    },
+    {
+      "date": "2018-05-30",
+      "precipitation_mm": 16.1,
+      "et0_mm": 5.8,
+      "era5_m3m3": 0.31,
+      "water_balance_m3m3": 0.292557,
+      "analysis_m3m3": 0.286884,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.169006,
+      "ismn_truth_m3m3": 0.121
+    },
+    {
+      "date": "2018-06-02",
+      "precipitation_mm": 0.0,
+      "et0_mm": 7.58,
+      "era5_m3m3": 0.2725,
+      "water_balance_m3m3": 0.279317,
+      "analysis_m3m3": 0.273643,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.144187,
+      "ismn_truth_m3m3": 0.177
+    },
+    {
+      "date": "2018-06-05",
+      "precipitation_mm": 0.1,
+      "et0_mm": 5.86,
+      "era5_m3m3": 0.210375,
+      "water_balance_m3m3": 0.18602,
+      "analysis_m3m3": 0.194519,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.10307,
+      "ismn_truth_m3m3": 0.115947
+    },
+    {
+      "date": "2018-06-08",
+      "precipitation_mm": 2.0,
+      "et0_mm": 6.06,
+      "era5_m3m3": 0.215875,
+      "water_balance_m3m3": 0.115811,
+      "analysis_m3m3": 0.167527,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.10671,
+      "ismn_truth_m3m3": 0.2146
+    },
+    {
+      "date": "2018-06-11",
+      "precipitation_mm": 0.0,
+      "et0_mm": 8.06,
+      "era5_m3m3": 0.193333,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.133491,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.091791,
+      "ismn_truth_m3m3": 0.16425
+    },
+    {
+      "date": "2018-06-14",
+      "precipitation_mm": 1.4,
+      "et0_mm": 8.36,
+      "era5_m3m3": 0.237458,
+      "water_balance_m3m3": 0.124229,
+      "analysis_m3m3": 0.188192,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.120995,
+      "ismn_truth_m3m3": 0.123238
+    },
+    {
+      "date": "2018-06-17",
+      "precipitation_mm": 0.0,
+      "et0_mm": 8.19,
+      "era5_m3m3": 0.185375,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.129734,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.086524,
+      "ismn_truth_m3m3": 0.11195
+    },
+    {
+      "date": "2018-06-20",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.83,
+      "era5_m3m3": 0.182042,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.128161,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.084318,
+      "ismn_truth_m3m3": 0.1032
+    },
+    {
+      "date": "2018-06-23",
+      "precipitation_mm": 8.1,
+      "et0_mm": 6.3,
+      "era5_m3m3": 0.235083,
+      "water_balance_m3m3": 0.132714,
+      "analysis_m3m3": 0.18103,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.119423,
+      "ismn_truth_m3m3": 0.092222
+    },
+    {
+      "date": "2018-07-01",
+      "precipitation_mm": 3.8,
+      "et0_mm": 4.22,
+      "era5_m3m3": 0.291625,
+      "water_balance_m3m3": 0.098589,
+      "analysis_m3m3": 0.212686,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.156844,
+      "ismn_truth_m3m3": 0.205545
+    },
+    {
+      "date": "2018-07-04",
+      "precipitation_mm": 0.0,
+      "et0_mm": 6.94,
+      "era5_m3m3": 0.251833,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.184538,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.130508,
+      "ismn_truth_m3m3": 0.1948
+    },
+    {
+      "date": "2018-07-07",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.98,
+      "era5_m3m3": 0.228625,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.173289,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.115148,
+      "ismn_truth_m3m3": 0.1826
+    },
+    {
+      "date": "2018-07-10",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.94,
+      "era5_m3m3": 0.186458,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.1334,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.087241,
+      "ismn_truth_m3m3": 0.137235
+    },
+    {
+      "date": "2018-07-13",
+      "precipitation_mm": 0.2,
+      "et0_mm": 6.95,
+      "era5_m3m3": 0.173292,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.124031,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.078527,
+      "ismn_truth_m3m3": 0.1171
+    },
+    {
+      "date": "2018-07-16",
+      "precipitation_mm": 0.4,
+      "et0_mm": 6.07,
+      "era5_m3m3": 0.177667,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.126096,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.081422,
+      "ismn_truth_m3m3": 0.133632
+    },
+    {
+      "date": "2018-07-20",
+      "precipitation_mm": 0.0,
+      "et0_mm": 7.79,
+      "era5_m3m3": 0.182583,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.128417,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.084676,
+      "ismn_truth_m3m3": 0.128062
+    },
+    {
+      "date": "2018-07-23",
+      "precipitation_mm": 0.0,
+      "et0_mm": 6.45,
+      "era5_m3m3": 0.168542,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.121789,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.075383,
+      "ismn_truth_m3m3": 0.099105
+    },
+    {
+      "date": "2018-07-26",
+      "precipitation_mm": 1.0,
+      "et0_mm": 4.17,
+      "era5_m3m3": 0.171542,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.123205,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.077369,
+      "ismn_truth_m3m3": 0.091647
+    },
+    {
+      "date": "2018-07-29",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.98,
+      "era5_m3m3": 0.172333,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.123579,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.128383,
+      "linear_regression_m3m3": 0.077892,
+      "ismn_truth_m3m3": 0.128938
+    },
+    {
+      "date": "2018-08-01",
+      "precipitation_mm": 0.0,
+      "et0_mm": 5.99,
+      "era5_m3m3": 0.273583,
+      "water_balance_m3m3": 0.240006,
+      "analysis_m3m3": 0.277992,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.144903,
+      "ismn_truth_m3m3": 0.157938
+    },
+    {
+      "date": "2018-08-04",
+      "precipitation_mm": 0.0,
+      "et0_mm": 8.31,
+      "era5_m3m3": 0.195833,
+      "water_balance_m3m3": 0.131109,
+      "analysis_m3m3": 0.181715,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.093445,
+      "ismn_truth_m3m3": 0.109167
+    },
+    {
+      "date": "2018-08-07",
+      "precipitation_mm": 2.8,
+      "et0_mm": 6.42,
+      "era5_m3m3": 0.172125,
+      "water_balance_m3m3": 0.08,
+      "analysis_m3m3": 0.134259,
+      "analysis_sigma_m3m3": 0.02748,
+      "persistence_m3m3": 0.175,
+      "climatology_m3m3": 0.188209,
+      "linear_regression_m3m3": 0.077755,
+      "ismn_truth_m3m3": 0.094833
+    }
+  ]
+}

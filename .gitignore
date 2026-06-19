@@ -20,6 +20,9 @@ fixtures/_source/gldas/*
 !fixtures/_source/smap/.gitkeep
 !fixtures/_source/gldas/.gitkeep
 .git-ssh.cmd
+frontend/node_modules/
+frontend/dist/
+*.tsbuildinfo
 
 # Distribution / packaging
 build/
