@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "offline_only": true,
+  "fixtures": [
+    {
+      "dataset": "NASA SMAP SPL3SMP V009",
+      "collection_concept_id": "C2938664585-NSIDC_CPRD",
+      "granule_concept_id": "G3087485017-NSIDC_CPRD",
+      "source_file": "SMAP_L3_SM_P_20210601_R19240_001.h5",
+      "source_url": "https://data.nsidc.earthdatacloud.nasa.gov/nsidc-cumulus-prod-protected/SMAP/SPL3SMP/009/2021/06/SMAP_L3_SM_P_20210601_R19240_001.h5",
+      "source_bytes": 33140597,
+      "source_sha256": "656163b2508b211f91235a0338a918b7839564484adc3fd3c00716b0f0bea397",
+      "fixture_file": "fixtures/smap/smap_l3_tiny.h5",
+      "fixture_bytes": 47424,
+      "fixture_sha256": "e90c7054175c46dab4f7199e69bd46d0070431d200d384997cc2ce6ff5b9377c",
+      "crop": {"pass": "AM", "row_start": 79, "row_stop": 84, "col_start": 218, "col_stop": 223},
+      "provenance": "Authenticated NASA Earthdata download; deterministic 5x5 crop preserving native datasets and attributes."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "source_file": "SMAP_L3_SM_P_20210601_R19240_001.h5",
+  "source_sha256": "656163b2508b211f91235a0338a918b7839564484adc3fd3c00716b0f0bea397",
+  "fixture_sha256": "e90c7054175c46dab4f7199e69bd46d0070431d200d384997cc2ce6ff5b9377c",
+  "station_id": "US_COSMOS_ARM1",
+  "station_lat": 36.6054,
+  "station_lon": -97.4878,
+  "pass": "AM",
+  "expected_grid_row": 81,
+  "expected_grid_col": 220,
+  "expected_pixel_center_lat": 36.72578048706055,
+  "expected_pixel_center_lon": -97.65560150146484,
+  "expected_soil_moisture_raw": 0.2580757737159729,
+  "expected_retrieval_qual_flag": 8,
+  "expected_surface_flag": 128,
+  "expected_qc_pass": false,
+  "expected_rejection_reasons": [
+    "frozen_ground"
+  ]
+}

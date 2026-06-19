@@ -1,2 +1,8 @@
 # Runtime is Python-standard-library only.
 pytest>=9.0,<10
+numpy>=2.0
+h5py>=3.16,<4
+netCDF4>=1.7,<2
+h5netcdf>=1.8,<2
+cftime>=1.6,<2
+earthaccess>=0.18,<1

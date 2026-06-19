@@ -10,3 +10,10 @@ data/processed/*
 !data/processed/.gitkeep
 hydro_bench/matched_tables/*
 !hydro_bench/matched_tables/.gitkeep
+fixtures/_source/*
+!fixtures/_source/smap/
+!fixtures/_source/gldas/
+fixtures/_source/smap/*
+fixtures/_source/gldas/*
+!fixtures/_source/smap/.gitkeep
+!fixtures/_source/gldas/.gitkeep
