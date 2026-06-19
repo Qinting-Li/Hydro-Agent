@@ -1,28 +1,71 @@
 # Hydrologic Earth-Agent / Hydro-Bench
 
-Hydro-Bench 同时评估水文结果、工具轨迹、数据许可边界、QC、物理一致性和失败拒绝。
+Hydro-Bench is a reproducible benchmark for evaluating tool-use agents in **soil moisture retrieval** and **hydrologic data assimilation**.
 
-## v0.2：任务模式与泄漏审计
+It evaluates:
 
-当前真实数据仍只有 COSMOS ARM-1 的 ISMN + ERA5，因此 v0.2 不声称多站泛化或卫星 footprint 验证。它先解决评测定义问题：
+* Hydrologic accuracy
+* Tool-use trajectory
+* Data leakage safety
+* Quality control
+* Physical consistency
+* Scientific refusal
+* Reproducibility
 
-| Task | 模式 | ISMN 输入策略 |
-|---|---|---|
-| `HB_0001` | station-aware forecasting | 允许历史 ISMN；禁止当前日、未来和测试标签 |
-| `HB_0002` | satellite-only retrieval | 禁止所有 ISMN 数值进入 agent；标签仅供 evaluator |
-| `HB_0003` | blocked gap-filling | 只允许 gap 开始前的 ISMN |
+Current version: **Hydro-Bench v0.2.0**
 
-每个 tool step 都记录 `accessed_inputs` 与 `execution_scope`。Leakage evaluator 逐步检查 `allowed_inputs` / `forbidden_inputs`；`compute_metrics` 属于 evaluator scope，隐藏测试标签不会进入 agent trajectory。
+A reproducible single-station benchmark MVP for soil moisture retrieval and hydrologic data assimilation using real ISMN and ERA5 data, with leakage auditing, tool trajectories, baselines, QC, metrics, provenance, and HTML reports.
 
-## Baseline 规则
+## Scope
 
-- Station-aware：rolling persistence、训练期 climatology、训练期线性回归、ERA5、水量平衡、Kalman。
-- Satellite-only：persistence、站点 climatology 和站点监督回归被明确排除；不是把它们算完再隐藏。
-- Gap-filling：gap 前最后观测 persistence、gap 前 climatology/线性回归、ERA5、水量平衡、Kalman。
+Hydro-Bench v0.2 defines leakage-safe task protocols for hydrologic agent evaluation.
 
-报告按 RMSE 排名，并显示是否超过 persistence。Satellite-only 中 persistence 显示为不适用。
+| Task      | Mode                      | ISMN Access Policy                                                      |
+| --------- | ------------------------- | ----------------------------------------------------------------------- |
+| `HB_0001` | Station-aware forecasting | Historical ISMN allowed; current-day, future, and test labels forbidden |
+| `HB_0002` | Satellite-only retrieval  | ISMN observations forbidden from the agent; labels are evaluator-only   |
+| `HB_0003` | Blocked gap-filling       | Only pre-gap ISMN observations allowed                                  |
 
-## 一条命令运行
+Each tool step records:
+
+* `accessed_inputs`
+* `execution_scope`
+
+The leakage evaluator checks each step against task-level `allowed_inputs` and `forbidden_inputs`. Metric computation is evaluator-only, so hidden labels do not enter the agent trajectory.
+
+## Baselines
+
+| Mode                      | Legal Baselines                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| Station-aware forecasting | Persistence, climatology, linear regression, ERA5, water balance, Kalman                         |
+| Satellite-only retrieval  | ERA5, water balance, Kalman                                                                      |
+| Blocked gap-filling       | Pre-gap persistence, pre-gap climatology, pre-gap linear regression, ERA5, water balance, Kalman |
+
+Reports rank methods by RMSE and show whether each method outperforms persistence when persistence is applicable.
+
+## Implemented Features
+
+Hydro-Bench v0.2 includes:
+
+* Three benchmark tasks: `HB_0001`, `HB_0002`, `HB_0003`
+* Ten benchmark tools for metadata, ISMN, ERA5, QC, matching, water balance, Kalman, baselines, uncertainty, and metrics
+* Agent executor with trajectory logging
+* Step-level leakage audit
+* Evaluator-only hidden ground truth
+* Tool-trajectory scoring
+* Hydrologic metrics:
+
+  * RMSE
+  * Bias
+  * ubRMSE
+  * Correlation
+  * 95% interval coverage
+* SHA-256 data provenance
+* Git, environment, GPU, config, and task snapshots
+* HTML reasoning reports
+* Offline SMAP L3 reader tests using a small real HDF5 fixture
+
+## Run
 
 ```powershell
 cd F:\hydrologic-earth-agent
@@ -36,40 +79,86 @@ python -m hydro_agent.benchmark.suite --root .
 pytest -q
 ```
 
-每次运行写入 `outputs/runs/<run-id>/`：指标、逐日表、trajectory/leakage audit、config/task 快照、数据哈希、Git/GPU 环境、四张 SVG 和 HTML 报告。
+Each run writes outputs to:
 
-## 多站与 split 支持
+```text
+outputs/runs/<run-id>/
+```
 
-`station_catalog.csv` 现在包含每站真实 `ismn_path` 和 `era5_path`，runner 不再硬编码 ARM-1 文件。已实现：
+Outputs include:
 
-- leave-year-out split；
-- leave-station-out split 与重叠检查；
-- blocked-gap evaluation；
-- `scripts/generate_station_tasks.py` 的真实数据门槛检查。
+* `metrics.json`
+* `trajectory.json`
+* `daily_estimates.csv`
+* leakage audit
+* task/config snapshots
+* data hashes
+* Git/GPU metadata
+* SVG figures
+* HTML report
 
-运行：
+## Multi-Station Support
+
+`station_catalog.csv` stores station-specific `ismn_path` and `era5_path`.
+
+Implemented split support:
+
+* Leave-year-out
+* Leave-station-out integrity checks
+* Blocked-gap evaluation
+* Real-data readiness check
+
+Run:
 
 ```powershell
 python scripts\generate_station_tasks.py --root . --minimum-stations 30
 ```
 
-当前会退出失败并生成 `hydro_bench/readiness.json`：ARM-1 不足两年，满足投稿门槛的站点为 0/30。该失败是预期科研保护，不会复制单站或制造假任务。
+The readiness checker validates whether local data meet the configured multi-station benchmark threshold.
 
-## 数据与复现
+## Reproducibility
 
-- `data_manifest.json` 固定原始文件大小和 SHA-256；
-- `configs/hydro_bench_v0.2.yaml` 固定 benchmark 门槛和设备请求；
-- `environment.yml` / `requirements.txt` 固定环境；
-- Git commit、GPU inventory 和 `CUDA_VISIBLE_DEVICES` 写入每个 run；
-- runtime 仍是 Python 标量 CPU。RTX 6000 绑定会记录，但不会虚报 CUDA 加速。
+Hydro-Bench records:
 
-## 未完成的投稿门槛
+* `data_manifest.json`
+* `configs/hydro_bench_v0.2.yaml`
+* `environment.yml`
+* `requirements.txt`
+* Git commit
+* GPU inventory
+* `CUDA_VISIBLE_DEVICES`
+* Runtime logs
+* Config and task snapshots
 
-- ≥30 个真实表层 ISMN 站、≥2 年、≥4 气候区；
-- 50–100 个基于真实站点的任务；
-- SMAP L3、GLDAS/Noah、ERA5-Land；
-- SMAP footprint / GLDAS grid matching；
-- leave-station-out 的真实跨站训练；
-- EnKF、多源观测算子和误差协方差。
+Current numerical kernels are CPU scalar implementations. GPU binding is recorded for reproducibility.
 
-这些属于 v0.3+ 数据与同化工作，当前报告会明确标记为 unavailable。
+## Roadmap
+
+### v0.3: Multi-Source Integration
+
+* Integrate SMAP L3 into the benchmark runner
+* Add GLDAS/Noah reader, unit conversion, and QC
+* Add SMAP footprint and GLDAS grid matching
+* Add SMAP and GLDAS baselines
+* Extend reports with station, footprint, and grid visualization
+
+### v0.4: Multi-Station Benchmark
+
+* Add at least 30 eligible ISMN stations
+* Generate 50–100 real-station tasks
+* Evaluate station-wise and climate-wise generalization
+* Run true leave-station-out experiments
+
+### v0.5: Research-Grade Assimilation
+
+* Implement Ensemble Kalman Filter
+* Add multi-source assimilation
+* Add observation operators
+* Add model and observation error covariance
+* Add uncertainty calibration and ablation studies
+
+## Scientific Positioning
+
+Hydro-Bench v0.2 is a leakage-audited, reproducible benchmark prototype for hydrologic tool-use agents.
+
+Its current contribution is the evaluation framework: task modes, leakage control, trajectory scoring, baseline ranking, scientific refusal, provenance tracking, and reproducible reporting.
